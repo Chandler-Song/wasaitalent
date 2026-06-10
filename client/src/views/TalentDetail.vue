@@ -14,9 +14,14 @@
       </div>
     </div>
 
-    <div v-loading="loading" :class="{ 'detail-body': !embedded }">
+    <div :class="{ 'detail-body': !embedded }">
 
-    <el-row :gutter="20" style="margin-top:16px" v-if="talent">
+    <div v-if="loading" style="text-align:center;padding:60px 0">
+      <el-icon class="is-loading" :size="32" color="#409eff"><Loading /></el-icon>
+      <div style="color:#909399;margin-top:8px;font-size:13px">加载中...</div>
+    </div>
+
+    <el-row :gutter="20" style="margin-top:16px" v-if="talent && !loading">
       <!-- 基本信息 -->
       <el-col :span="16">
         <el-card shadow="never">
@@ -112,11 +117,11 @@
               </div>
             </el-timeline-item>
           </el-timeline>
-          <el-empty v-else description="暂无工作经历" :image-size="60" />
+          <div v-else class="empty-compact">暂无工作经历</div>
         </el-card>
 
         <!-- 教育经历 -->
-        <el-card shadow="never" style="margin-top:16px">
+        <el-card shadow="never" style="margin-top:12px">
           <template #header>
             <div class="card-header">
               <span>教育经历 ({{ educations.length }})</span>
@@ -140,11 +145,11 @@
               </div>
             </el-timeline-item>
           </el-timeline>
-          <el-empty v-else description="暂无教育经历" :image-size="60" />
+          <div v-else class="empty-compact">暂无教育经历</div>
         </el-card>
 
         <!-- 论文发表 -->
-        <el-card shadow="never" style="margin-top:16px">
+        <el-card shadow="never" style="margin-top:12px">
           <template #header>
             <div class="card-header">
               <span>论文发表 ({{ papers.length }})</span>
@@ -168,11 +173,11 @@
             </div>
             <div v-if="p.abstract" class="paper-abstract">{{ p.abstract.length > 200 ? p.abstract.substring(0, 200) + '...' : p.abstract }}</div>
           </div>
-          <el-empty v-if="papers.length === 0" description="暂无论文" :image-size="60" />
+          <div v-if="papers.length === 0" class="empty-compact">暂无论文</div>
         </el-card>
 
         <!-- 专利 -->
-        <el-card shadow="never" style="margin-top:16px">
+        <el-card shadow="never" style="margin-top:12px">
           <template #header>
             <div class="card-header">
               <span>专利 ({{ patents.length }})</span>
@@ -195,11 +200,11 @@
               <span v-if="p.assignee"> · 权利人: {{ p.assignee }}</span>
             </div>
           </div>
-          <el-empty v-if="patents.length === 0" description="暂无专利" :image-size="60" />
+          <div v-if="patents.length === 0" class="empty-compact">暂无专利</div>
         </el-card>
 
         <!-- 行业会议 -->
-        <el-card shadow="never" style="margin-top:16px">
+        <el-card shadow="never" style="margin-top:12px">
           <template #header>
             <div class="card-header">
               <span>行业会议 ({{ conferences.length }})</span>
@@ -219,11 +224,11 @@
               <span v-if="c.location"> · {{ c.location }}</span>
             </div>
           </div>
-          <el-empty v-if="conferences.length === 0" description="暂无会议记录" :image-size="60" />
+          <div v-if="conferences.length === 0" class="empty-compact">暂无会议记录</div>
         </el-card>
 
         <!-- GitHub项目 -->
-        <el-card shadow="never" style="margin-top:16px">
+        <el-card shadow="never" style="margin-top:12px">
           <template #header>
             <div class="card-header">
               <span>GitHub项目 ({{ githubRepos.length }})</span>
@@ -247,7 +252,7 @@
               <span v-if="repo.last_pushed_at">更新: {{ repo.last_pushed_at?.slice(0, 10) }}</span>
             </div>
           </div>
-          <el-empty v-if="githubRepos.length === 0" description="暂无GitHub项目" :image-size="60" />
+          <div v-if="githubRepos.length === 0" class="empty-compact">暂无GitHub项目</div>
         </el-card>
       </el-col>
 
@@ -274,7 +279,7 @@
             <div v-if="p.company || p.location" class="profile-meta">{{ [p.company, p.location].filter(Boolean).join(' · ') }}</div>
             <div v-if="p.bio" class="profile-bio">{{ p.bio }}</div>
           </div>
-          <el-empty v-if="profiles.length === 0" description="暂无平台档案" :image-size="60" />
+          <div v-if="profiles.length === 0" class="empty-compact">暂无平台档案</div>
         </el-card>
 
         <!-- 关联人才 -->
@@ -314,7 +319,7 @@
             </div>
             <div v-else class="note-content">{{ note.content }}</div>
           </div>
-          <el-empty v-if="notes.length === 0" description="暂无备注" :image-size="60" />
+          <div v-if="notes.length === 0" class="empty-compact">暂无备注</div>
           <el-divider />
           <el-input v-model="newNote" type="textarea" :rows="2" placeholder="添加备注..." />
           <el-button type="primary" size="small" @click="addNote" style="margin-top:8px" :disabled="!newNote.trim()">提交</el-button>
@@ -342,13 +347,14 @@
               <span v-if="f.next_date" style="color:#409eff">{{ f.next_date }}</span>
             </div>
           </div>
-          <el-empty v-if="followups.length === 0" description="暂无跟盯记录" :image-size="60" />
+          <div v-if="followups.length === 0" class="empty-compact">暂无跟盯记录</div>
         </el-card>
       </el-col>
     </el-row>
+    </div><!-- end detail-body -->
 
     <!-- 添加/编辑平台档案对话框 -->
-    <el-dialog v-model="showProfileDialog" :title="profileForm.id ? '编辑平台档案' : '添加平台档案'" width="500px">
+    <el-dialog v-model="showProfileDialog" append-to="body" :title="profileForm.id ? '编辑平台档案' : '添加平台档案'" width="500px">
       <el-form :model="profileForm" label-width="80px">
         <el-form-item label="平台" required>
           <el-select v-model="profileForm.platform">
@@ -374,7 +380,7 @@
     </el-dialog>
 
     <!-- 查看平台档案详情对话框 -->
-    <el-dialog v-model="showProfileDetailDialog" :title="`${platformLabel(viewingProfile.platform)} 档案详情`" width="550px">
+    <el-dialog v-model="showProfileDetailDialog" append-to="body" :title="`${platformLabel(viewingProfile.platform)} 档案详情`" width="550px">
       <el-descriptions :column="1" border v-if="viewingProfile">
         <el-descriptions-item label="平台">{{ platformLabel(viewingProfile.platform) }}</el-descriptions-item>
         <el-descriptions-item label="显示名">{{ viewingProfile.display_name || '-' }}</el-descriptions-item>
@@ -397,7 +403,7 @@
     </el-dialog>
 
     <!-- 关联人才对话框 -->
-    <el-dialog v-model="showMergeDialog" title="关联人才" width="500px">
+    <el-dialog v-model="showMergeDialog" append-to="body" title="关联人才" width="500px">
       <el-tabs v-model="mergeTab">
         <el-tab-pane label="按名字搜索" name="search">
           <el-input v-model="mergeSearchQuery" placeholder="搜索姓名/公司..." @input="searchForMerge" clearable style="margin-bottom:12px" />
@@ -424,7 +430,7 @@
     </el-dialog>
 
     <!-- 添加/编辑工作经历对话框 -->
-    <el-dialog v-model="showExpDialog" :title="expForm.id ? '编辑工作经历' : '添加工作经历'" width="500px">
+    <el-dialog v-model="showExpDialog" append-to="body" :title="expForm.id ? '编辑工作经历' : '添加工作经历'" width="500px">
       <el-form :model="expForm" label-width="80px">
         <el-form-item label="公司"><el-input v-model="expForm.company" /></el-form-item>
         <el-form-item label="职位"><el-input v-model="expForm.title" /></el-form-item>
@@ -441,7 +447,7 @@
     </el-dialog>
 
     <!-- 添加/编辑教育经历对话框 -->
-    <el-dialog v-model="showEduDialog" :title="eduForm.id ? '编辑教育经历' : '添加教育经历'" width="500px">
+    <el-dialog v-model="showEduDialog" append-to="body" :title="eduForm.id ? '编辑教育经历' : '添加教育经历'" width="500px">
       <el-form :model="eduForm" label-width="80px">
         <el-form-item label="学校"><el-input v-model="eduForm.school" /></el-form-item>
         <el-form-item label="学位"><el-input v-model="eduForm.degree" placeholder="硕士/本科/博士" /></el-form-item>
@@ -456,7 +462,7 @@
     </el-dialog>
 
     <!-- 添加/编辑跟盯记录对话框 -->
-    <el-dialog v-model="showFollowupDialog" :title="followupForm.id ? '编辑跟盯记录' : '添加跟盯记录'" width="500px">
+    <el-dialog v-model="showFollowupDialog" append-to="body" :title="followupForm.id ? '编辑跟盯记录' : '添加跟盯记录'" width="500px">
       <el-form :model="followupForm" label-width="80px">
         <el-form-item label="类型" required>
           <el-select v-model="followupForm.type">
@@ -485,7 +491,7 @@
     </el-dialog>
 
     <!-- 添加/编辑论文对话框 -->
-    <el-dialog v-model="showPaperDialog" :title="paperForm.id ? '编辑论文' : '添加论文'" width="550px">
+    <el-dialog v-model="showPaperDialog" append-to="body" :title="paperForm.id ? '编辑论文' : '添加论文'" width="550px">
       <el-form :model="paperForm" label-width="80px">
         <el-form-item label="标题" required><el-input v-model="paperForm.title" /></el-form-item>
         <el-form-item label="作者"><el-input v-model="paperForm.authors" placeholder="逗号分隔" /></el-form-item>
@@ -505,7 +511,7 @@
     </el-dialog>
 
     <!-- 添加/编辑专利对话框 -->
-    <el-dialog v-model="showPatentDialog" :title="patentForm.id ? '编辑专利' : '添加专利'" width="550px">
+    <el-dialog v-model="showPatentDialog" append-to="body" :title="patentForm.id ? '编辑专利' : '添加专利'" width="550px">
       <el-form :model="patentForm" label-width="80px">
         <el-form-item label="标题" required><el-input v-model="patentForm.title" /></el-form-item>
         <el-form-item label="专利号"><el-input v-model="patentForm.patent_number" /></el-form-item>
@@ -524,7 +530,7 @@
     </el-dialog>
 
     <!-- 添加/编辑会议对话框 -->
-    <el-dialog v-model="showConferenceDialog" :title="conferenceForm.id ? '编辑会议' : '添加会议'" width="500px">
+    <el-dialog v-model="showConferenceDialog" append-to="body" :title="conferenceForm.id ? '编辑会议' : '添加会议'" width="500px">
       <el-form :model="conferenceForm" label-width="80px">
         <el-form-item label="会议名称" required><el-input v-model="conferenceForm.conference_name" /></el-form-item>
         <el-form-item label="角色"><el-input v-model="conferenceForm.role" placeholder="如: Speaker/Attendee/PC Member" /></el-form-item>
@@ -540,7 +546,7 @@
     </el-dialog>
 
     <!-- 添加/编辑GitHub项目对话框 -->
-    <el-dialog v-model="showRepoDialog" :title="repoForm.id ? '编辑GitHub项目' : '添加GitHub项目'" width="550px">
+    <el-dialog v-model="showRepoDialog" append-to="body" :title="repoForm.id ? '编辑GitHub项目' : '添加GitHub项目'" width="550px">
       <el-form :model="repoForm" label-width="80px">
         <el-form-item label="项目名" required><el-input v-model="repoForm.repo_name" placeholder="如: my-project" /></el-form-item>
         <el-form-item label="全名"><el-input v-model="repoForm.full_name" placeholder="如: user/my-project" /></el-form-item>
@@ -560,7 +566,6 @@
         <el-button type="primary" @click="saveRepo">{{ repoForm.id ? '保存' : '添加' }}</el-button>
       </template>
     </el-dialog>
-  </div><!-- end detail-body -->
   </div><!-- end detail-page -->
 </template>
 
@@ -569,7 +574,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { talentsApi } from '../api'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Clock, ArrowLeft } from '@element-plus/icons-vue'
+import { Clock, ArrowLeft, Loading } from '@element-plus/icons-vue'
 
 const props = defineProps({
   talentId: { type: [Number, String], default: null },
@@ -627,7 +632,7 @@ const viewingProfile = ref({})
 const profileForm = ref({ platform: 'github', platform_url: '', username: '', display_name: '', bio: '', title: '', company: '', location: '', email: '' })
 const expForm = ref({ company: '', title: '', start_date: '', end_date: '', duration: '', location: '', description: '' })
 const eduForm = ref({ school: '', degree: '', field: '', dates: '', location: '' })
-const followupForm = ref({ type: 'note', content: '', next_action: '', next_date: null })
+const followupForm = ref({ type: 'note', content: '', next_action: '', next_date: '' })
 const paperForm = ref({ title: '', authors: '', abstract: '', venue: '', year: null, doi: '', arxiv_id: '', pdf_url: '', categories: '', citation_count: 0 })
 const patentForm = ref({ title: '', patent_number: '', patent_type: '', status: '', filing_date: '', grant_date: '', inventors: '', assignee: '', abstract: '' })
 const conferenceForm = ref({ conference_name: '', role: '', title: '', year: null, location: '', url: '' })
@@ -805,18 +810,18 @@ async function saveExperience() {
   try {
     if (expForm.value.id) {
       const { id, ...data } = expForm.value
-      const res = await talentsApi.updateExperience(tid.value, id, data)
-      const idx = experiences.value.findIndex(x => x.id === id)
-      if (idx !== -1) experiences.value[idx] = res.data
+      await talentsApi.updateExperience(tid.value, id, data)
       ElMessage.success('工作经历已更新')
     } else {
-      const res = await talentsApi.addExperience(tid.value, { ...expForm.value, data_source: 'manual' })
-      experiences.value.push(res.data)
+      await talentsApi.addExperience(tid.value, { ...expForm.value, data_source: 'manual' })
       ElMessage.success('工作经历已添加')
     }
     showExpDialog.value = false
     expForm.value = { company: '', title: '', start_date: '', end_date: '', duration: '', location: '', description: '' }
-  } catch (err) { ElMessage.error(expForm.value.id ? '更新工作经历失败' : '添加工作经历失败') }
+    loadDetail()
+  } catch (err) {
+    ElMessage.error(expForm.value.id ? '更新工作经历失败' : '添加工作经历失败')
+  }
 }
 
 async function deleteExperience(exp) {
@@ -836,18 +841,18 @@ async function saveEducation() {
   try {
     if (eduForm.value.id) {
       const { id, ...data } = eduForm.value
-      const res = await talentsApi.updateEducation(tid.value, id, data)
-      const idx = educations.value.findIndex(x => x.id === id)
-      if (idx !== -1) educations.value[idx] = res.data
+      await talentsApi.updateEducation(tid.value, id, data)
       ElMessage.success('教育经历已更新')
     } else {
-      const res = await talentsApi.addEducation(tid.value, { ...eduForm.value, data_source: 'manual' })
-      educations.value.push(res.data)
+      await talentsApi.addEducation(tid.value, { ...eduForm.value, data_source: 'manual' })
       ElMessage.success('教育经历已添加')
     }
     showEduDialog.value = false
     eduForm.value = { school: '', degree: '', field: '', dates: '', location: '' }
-  } catch (err) { ElMessage.error(eduForm.value.id ? '更新教育经历失败' : '添加教育经历失败') }
+    loadDetail()
+  } catch (err) {
+    ElMessage.error(eduForm.value.id ? '更新教育经历失败' : '添加教育经历失败')
+  }
 }
 
 async function deleteEducation(edu) {
@@ -869,7 +874,7 @@ function followupTagType(t) {
 }
 
 function openAddFollowup() {
-  followupForm.value = { type: 'note', content: '', next_action: '', next_date: null }
+  followupForm.value = { type: 'note', content: '', next_action: '', next_date: '' }
   showFollowupDialog.value = true
 }
 
@@ -892,7 +897,7 @@ async function saveFollowup() {
       ElMessage.success('跟盯记录已添加')
     }
     showFollowupDialog.value = false
-    followupForm.value = { type: 'note', content: '', next_action: '', next_date: null }
+    followupForm.value = { type: 'note', content: '', next_action: '', next_date: '' }
   } catch (err) { ElMessage.error(followupForm.value.id ? '更新跟盯记录失败' : '添加跟盯记录失败') }
 }
 
@@ -1024,6 +1029,13 @@ watch(() => props.talentId, (newVal) => { if (newVal) loadDetail() })
 .detail-body { padding: 20px 24px; }
 .page-header { margin-bottom: 16px; }
 .card-header { display: flex; justify-content: space-between; align-items: center; }
+.empty-compact {
+  text-align: center;
+  color: #c0c4cc;
+  font-size: 13px;
+  padding: 12px 0;
+  line-height: 1.4;
+}
 .profile-item { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #f0f0f0; }
 .profile-item:last-child { border-bottom: none; }
 .profile-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }

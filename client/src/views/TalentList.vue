@@ -206,7 +206,7 @@
         v-if="showDetailDialog"
         :talent-id="selectedTalentId"
         :embedded="true"
-        @edit="(id) => { showDetailDialog = false; openEdit(id) }"
+        @edit="openEditFromDetail"
       />
     </el-dialog>
 
@@ -254,6 +254,14 @@ function openDetail(row) {
 
 function openEdit(id) {
   editingTalentId.value = id || null
+  showEditDialog.value = true
+}
+
+// 从详情模态框内点击编辑：先关闭详情框（让 destroy-on-close 正常清理内部所有子对话框），再打开编辑框
+function openEditFromDetail(id) {
+  showDetailDialog.value = false
+  selectedTalentId.value = null
+  editingTalentId.value = id
   showEditDialog.value = true
 }
 

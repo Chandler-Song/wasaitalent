@@ -237,6 +237,21 @@ router.put('/:id', authMiddleware, (req, res) => {
 });
 
 // 删除人才信息
+// 取消关联（必须放在 DELETE /:id 之前，避免被 /:id 拦截）
+router.delete('/merge', authMiddleware, (req, res) => {
+  try {
+    const { primary_talent_id, merged_talent_id } = req.body;
+    run(
+      `DELETE FROM talent_merges WHERE (primary_talent_id = ? AND merged_talent_id = ?) OR (primary_talent_id = ? AND merged_talent_id = ?)`,
+      [primary_talent_id, merged_talent_id, merged_talent_id, primary_talent_id]
+    );
+    saveDb();
+    res.json({ message: '关联已取消' });
+  } catch (err) {
+    res.status(500).json({ error: '取消关联失败: ' + err.message });
+  }
+});
+
 router.delete('/:id', authMiddleware, (req, res) => {
   try {
     const talent = get('SELECT id FROM talents WHERE id = ?', [req.params.id]);
@@ -382,20 +397,7 @@ router.post('/merge', authMiddleware, (req, res) => {
   }
 });
 
-// 取消关联
-router.delete('/merge', authMiddleware, (req, res) => {
-  try {
-    const { primary_talent_id, merged_talent_id } = req.body;
-    run(
-      `DELETE FROM talent_merges WHERE (primary_talent_id = ? AND merged_talent_id = ?) OR (primary_talent_id = ? AND merged_talent_id = ?)`,
-      [primary_talent_id, merged_talent_id, merged_talent_id, primary_talent_id]
-    );
-    saveDb();
-    res.json({ message: '关联已取消' });
-  } catch (err) {
-    res.status(500).json({ error: '取消关联失败: ' + err.message });
-  }
-});
+// （取消关联路由已移至 DELETE /:id 之前）
 
 // 聚合查询 - 按数据来源统计
 router.get('/stats/sources', authMiddleware, (req, res) => {
