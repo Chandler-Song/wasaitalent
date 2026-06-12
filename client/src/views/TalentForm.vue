@@ -113,8 +113,13 @@
         </el-form-item>
         <el-row :gutter="20">
           <el-col :span="8">
-            <el-form-item label="个人主页">
-              <el-input v-model="form.homepage" placeholder="URL" />
+            <el-form-item label="LinkedIn">
+              <el-input v-model="form.linkedin_url" placeholder="LinkedIn URL" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="脉脉">
+              <el-input v-model="form.maimai_url" placeholder="脉脉 URL" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
@@ -122,9 +127,11 @@
               <el-input v-model="form.github_url" placeholder="GitHub URL" />
             </el-form-item>
           </el-col>
+        </el-row>
+        <el-row :gutter="20">
           <el-col :span="8">
-            <el-form-item label="Google Scholar">
-              <el-input v-model="form.google_scholar_url" placeholder="Scholar URL" />
+            <el-form-item label="个人主页">
+              <el-input v-model="form.homepage" placeholder="URL" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -139,6 +146,10 @@
                 <el-option label="脉脉" value="maimai" />
                 <el-option label="GitHub" value="github" />
                 <el-option label="AMiner" value="aminer" />
+                <el-option label="微信" value="wechat" />
+                <el-option label="arXiv" value="arxiv" />
+                <el-option label="专利" value="patent" />
+                <el-option label="会议" value="conference" />
                 <el-option label="CSV" value="csv" />
               </el-select>
             </el-form-item>
@@ -187,7 +198,8 @@ const form = ref({
   data_source: 'manual', import_method: 'manual',
   tags: '', rating: 0, status: 'active',
   open_to_work: '', suitable_roles: '', homepage: '', github_url: '', google_scholar_url: '',
-  gender: '', expected_salary: '', job_preference: '', wechat: ''
+  gender: '', expected_salary: '', job_preference: '', wechat: '',
+  linkedin_url: '', maimai_url: ''
 })
 
 onMounted(async () => {

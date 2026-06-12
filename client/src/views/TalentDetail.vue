@@ -71,10 +71,11 @@
               <el-tag v-for="tag in (talent.tags||'').split(',').filter(Boolean)" :key="tag" type="info" size="small" style="margin:2px">{{ tag.trim() }}</el-tag>
             </el-descriptions-item>
             <el-descriptions-item label="简介" :span="2">{{ talent.summary || '-' }}</el-descriptions-item>
-            <el-descriptions-item label="个人链接" :span="2" v-if="talent.homepage || talent.github_url || talent.google_scholar_url">
-              <a v-if="talent.homepage" :href="talent.homepage" target="_blank" style="margin-right:12px;color:#409eff">主页</a>
+            <el-descriptions-item label="个人链接" :span="2" v-if="talent.linkedin_url || talent.maimai_url || talent.github_url || talent.homepage">
+              <a v-if="talent.linkedin_url" :href="talent.linkedin_url" target="_blank" style="margin-right:12px;color:#409eff">LinkedIn</a>
+              <a v-if="talent.maimai_url" :href="talent.maimai_url" target="_blank" style="margin-right:12px;color:#409eff">脉脉</a>
               <a v-if="talent.github_url" :href="talent.github_url" target="_blank" style="margin-right:12px;color:#409eff">GitHub</a>
-              <a v-if="talent.google_scholar_url" :href="talent.google_scholar_url" target="_blank" style="color:#409eff">Google Scholar</a>
+              <a v-if="talent.homepage" :href="talent.homepage" target="_blank" style="color:#409eff">主页</a>
             </el-descriptions-item>
           </el-descriptions>
         </el-card>
@@ -103,14 +104,6 @@
                 </div>
                 <div v-if="exp.location" class="exp-meta">{{ exp.location }}</div>
                 <div v-if="exp.description" class="exp-desc">{{ exp.description }}</div>
-                <div v-if="exp.responsibilities" class="exp-detail">
-                  <strong>职责：</strong>
-                  <span v-for="(r, i) in parseJsonArray(exp.responsibilities)" :key="i">{{ r }}；</span>
-                </div>
-                <div v-if="exp.achievements" class="exp-detail">
-                  <strong>成就：</strong>
-                  <span v-for="(a, i) in parseJsonArray(exp.achievements)" :key="i">{{ a }}；</span>
-                </div>
                 <div v-if="exp.company_details" class="exp-meta">
                   <el-tag v-for="(v, k) in parseCompanyDetails(exp.company_details)" :key="k" size="small" type="info" style="margin:2px">{{ v }}</el-tag>
                 </div>
@@ -139,6 +132,7 @@
                 <div class="edu-dates">{{ [edu.start_date, edu.end_date].filter(Boolean).join(' - ') }}</div>
                 <div class="edu-meta">{{ [edu.degree, edu.field].filter(Boolean).join(' · ') }}</div>
                 <div v-if="edu.location" class="edu-meta">{{ edu.location }}</div>
+                <div v-if="edu.description" class="edu-desc">{{ edu.description }}</div>
                 <div v-if="edu.ranking_info" class="edu-ranking">
                   <el-tag v-for="tag in parseRankingTags(edu.ranking_info)" :key="tag" size="small" type="warning" style="margin:2px">{{ tag }}</el-tag>
                 </div>
@@ -454,6 +448,7 @@
         <el-form-item label="专业"><el-input v-model="eduForm.field" /></el-form-item>
         <el-form-item label="时间"><el-input v-model="eduForm.dates" placeholder="如 2018 - 2023" /></el-form-item>
         <el-form-item label="学校地点"><el-input v-model="eduForm.location" /></el-form-item>
+        <el-form-item label="详情描述"><el-input v-model="eduForm.description" type="textarea" :rows="2" placeholder="主修课程、研究方向等" /></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="showEduDialog = false">取消</el-button>
@@ -481,7 +476,7 @@
           <el-input v-model="followupForm.next_action" placeholder="如: 安排二面、发offer等" />
         </el-form-item>
         <el-form-item label="计划日期">
-          <el-date-picker v-model="followupForm.next_date" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width:100%" />
+          <el-input v-model="followupForm.next_date" placeholder="YYYY-MM-DD" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -631,7 +626,7 @@ const mergeSearchResults = ref([])
 const viewingProfile = ref({})
 const profileForm = ref({ platform: 'github', platform_url: '', username: '', display_name: '', bio: '', title: '', company: '', location: '', email: '' })
 const expForm = ref({ company: '', title: '', start_date: '', end_date: '', duration: '', location: '', description: '' })
-const eduForm = ref({ school: '', degree: '', field: '', dates: '', location: '' })
+const eduForm = ref({ school: '', degree: '', field: '', dates: '', location: '', description: '' })
 const followupForm = ref({ type: 'note', content: '', next_action: '', next_date: '' })
 const paperForm = ref({ title: '', authors: '', abstract: '', venue: '', year: null, doi: '', arxiv_id: '', pdf_url: '', categories: '', citation_count: 0 })
 const patentForm = ref({ title: '', patent_number: '', patent_type: '', status: '', filing_date: '', grant_date: '', inventors: '', assignee: '', abstract: '' })
@@ -848,7 +843,7 @@ async function saveEducation() {
       ElMessage.success('教育经历已添加')
     }
     showEduDialog.value = false
-    eduForm.value = { school: '', degree: '', field: '', dates: '', location: '' }
+    eduForm.value = { school: '', degree: '', field: '', dates: '', location: '', description: '' }
     loadDetail()
   } catch (err) {
     ElMessage.error(eduForm.value.id ? '更新教育经历失败' : '添加教育经历失败')
@@ -1066,6 +1061,7 @@ watch(() => props.talentId, (newVal) => { if (newVal) loadDetail() })
 .edu-school { font-weight: 600; font-size: 15px; }
 .edu-meta { font-size: 12px; color: #909399; margin-top: 4px; }
 .edu-dates { font-size: 13px; color: #606266; margin-top: 2px; }
+.edu-desc { font-size: 13px; color: #606266; margin-top: 4px; }
 .edu-ranking { margin-top: 4px; }
 .followup-item { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #f0f0f0; }
 .followup-item:last-child { border-bottom: none; }

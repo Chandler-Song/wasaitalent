@@ -27,10 +27,7 @@
       <el-col :span="8">
         <el-card shadow="never">
           <template #header><span>数据来源分布</span></template>
-          <div v-for="item in dashboard?.sourceStats" :key="item.data_source" class="source-bar">
-            <span class="source-label">{{ sourceLabel(item.data_source) }}</span>
-            <el-progress :percentage="Math.round(item.count / dashboard.totalTalents * 100)" :stroke-width="18" :text-inside="true" :format="() => item.count" />
-          </div>
+          <div ref="sourceChartRef" style="width:100%;height:280px"></div>
         </el-card>
       </el-col>
 
@@ -38,10 +35,7 @@
       <el-col :span="8">
         <el-card shadow="never">
           <template #header><span>导入方式分布</span></template>
-          <div v-for="item in dashboard?.importMethodStats" :key="item.import_method" class="source-bar">
-            <span class="source-label">{{ importMethodLabel(item.import_method) }}</span>
-            <el-progress :percentage="Math.round(item.count / dashboard.totalTalents * 100)" :stroke-width="18" :text-inside="true" :format="() => item.count" type="success" />
-          </div>
+          <div ref="importChartRef" style="width:100%;height:280px"></div>
         </el-card>
       </el-col>
 
@@ -49,10 +43,7 @@
       <el-col :span="8">
         <el-card shadow="never">
           <template #header><span>平台档案分布</span></template>
-          <div v-for="item in dashboard?.platformStats" :key="item.platform" class="source-bar">
-            <span class="source-label">{{ platformLabel(item.platform) }}</span>
-            <el-progress :percentage="dashboard.totalProfiles ? Math.round(item.count / dashboard.totalProfiles * 100) : 0" :stroke-width="18" :text-inside="true" :format="() => item.count" type="warning" />
-          </div>
+          <div ref="platformChartRef" style="width:100%;height:280px"></div>
         </el-card>
       </el-col>
     </el-row>
@@ -146,10 +137,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick, onUnmounted } from 'vue'
 import { adminApi } from '../api'
 import { useUserStore } from '../stores/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import * as echarts from 'echarts'
 
 const userStore = useUserStore()
 const loading = ref(true)
@@ -161,6 +153,69 @@ const showKeyResult = ref(false)
 const newKeyValue = ref('')
 const apiKeyForm = ref({ name: '', permissions: 'read' })
 
+const sourceChartRef = ref(null)
+const importChartRef = ref(null)
+const platformChartRef = ref(null)
+let sourceChart = null
+let importChart = null
+let platformChart = null
+
+function renderPieChart(chartRef, data, labelFn, colorPalette) {
+  if (!chartRef) return null
+  const chart = echarts.init(chartRef)
+  const option = {
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b}: {c} ({d}%)'
+    },
+    legend: {
+      orient: 'vertical',
+      right: 10,
+      top: 'center',
+      textStyle: { fontSize: 12 }
+    },
+    color: colorPalette,
+    series: [{
+      type: 'pie',
+      radius: ['40%', '70%'],
+      center: ['35%', '50%'],
+      avoidLabelOverlap: true,
+      itemStyle: {
+        borderRadius: 6,
+        borderColor: '#fff',
+        borderWidth: 2
+      },
+      label: { show: false },
+      emphasis: {
+        label: { show: true, fontSize: 14, fontWeight: 'bold' },
+        itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)' }
+      },
+      data: data.map(item => ({
+        value: item.count,
+        name: labelFn(item.data_source || item.import_method || item.platform)
+      }))
+    }]
+  }
+  chart.setOption(option)
+  return chart
+}
+
+function renderCharts() {
+  if (!dashboard.value) return
+  sourceChart = renderPieChart(sourceChartRef.value, dashboard.value.sourceStats || [], sourceLabel,
+    ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc', '#48b8d0'])
+  importChart = renderPieChart(importChartRef.value, dashboard.value.importMethodStats || [], importMethodLabel,
+    ['#91cc75', '#5470c6', '#fac858', '#ee6666', '#73c0de'])
+  platformChart = renderPieChart(platformChartRef.value, dashboard.value.platformStats || [], platformLabel,
+    ['#fac858', '#5470c6', '#91cc75', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4'])
+}
+
+function handleResize() {
+  sourceChart?.resize()
+  importChart?.resize()
+  platformChart?.resize()
+}
+
 async function loadDashboard() {
   loading.value = true
   try {
@@ -168,6 +223,8 @@ async function loadDashboard() {
     dashboard.value = dashRes.data
     users.value = usersRes.data
     apiKeys.value = keysRes.data
+    await nextTick()
+    renderCharts()
   } catch (err) { ElMessage.error('加载管理数据失败') }
   finally { loading.value = false }
 }
@@ -205,7 +262,17 @@ function sourceLabel(v) { return sourceMap[v] || v }
 function importMethodLabel(v) { return importMap[v] || v }
 function platformLabel(v) { return platformMap[v] || v }
 
-onMounted(loadDashboard)
+onMounted(() => {
+  loadDashboard()
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+  sourceChart?.dispose()
+  importChart?.dispose()
+  platformChart?.dispose()
+})
 </script>
 
 <style scoped>

@@ -49,6 +49,8 @@
       <el-collapse-transition>
         <div v-if="showAdvanced" class="advanced-search">
           <el-divider style="margin:12px 0" />
+          <!-- 区块1：基本信息 -->
+          <div style="margin-bottom:8px;font-size:13px;color:#606266;font-weight:500">基本信息</div>
           <el-row :gutter="12" style="margin-bottom:10px">
             <el-col :span="4">
               <el-input v-model="filters.location" placeholder="地区" clearable @clear="loadTalents" @keyup.enter="loadTalents" />
@@ -80,15 +82,12 @@
               </el-select>
             </el-col>
             <el-col :span="4">
-              <div style="display:flex;align-items:center;gap:4px">
-                <el-input-number v-model="filters.experience_years_min" :min="0" :max="50" placeholder="经验最少" size="default" controls-position="right" style="flex:1" />
-                <span style="color:#909399">~</span>
-                <el-input-number v-model="filters.experience_years_max" :min="0" :max="50" placeholder="最多" size="default" controls-position="right" style="flex:1" />
-                <span style="font-size:12px;color:#909399;white-space:nowrap">年</span>
-              </div>
+              <el-input v-model="filters.tags" placeholder="标签" clearable @clear="loadTalents" @keyup.enter="loadTalents" />
             </el-col>
           </el-row>
-          <el-row :gutter="12">
+          <!-- 区块2：联系方式 -->
+          <div style="margin-bottom:8px;font-size:13px;color:#606266;font-weight:500">联系方式</div>
+          <el-row :gutter="12" style="margin-bottom:10px">
             <el-col :span="4">
               <el-input v-model="filters.email" placeholder="邮箱包含" clearable @clear="loadTalents" @keyup.enter="loadTalents" />
             </el-col>
@@ -98,6 +97,10 @@
             <el-col :span="4">
               <el-input v-model="filters.wechat" placeholder="微信包含" clearable @clear="loadTalents" @keyup.enter="loadTalents" />
             </el-col>
+          </el-row>
+          <!-- 区块3：工作信息 -->
+          <div style="margin-bottom:8px;font-size:13px;color:#606266;font-weight:500">工作信息</div>
+          <el-row :gutter="12" style="margin-bottom:10px">
             <el-col :span="4">
               <el-input v-model="filters.suitable_roles" placeholder="适合岗位" clearable @clear="loadTalents" @keyup.enter="loadTalents" />
             </el-col>
@@ -106,10 +109,47 @@
             </el-col>
             <el-col :span="4">
               <div style="display:flex;align-items:center;gap:4px">
+                <el-input-number v-model="filters.experience_years_min" :min="0" :max="50" placeholder="经验最少" size="default" controls-position="right" style="flex:1" />
+                <span style="color:#909399">~</span>
+                <el-input-number v-model="filters.experience_years_max" :min="0" :max="50" placeholder="最多" size="default" controls-position="right" style="flex:1" />
+                <span style="font-size:12px;color:#909399;white-space:nowrap">年</span>
+              </div>
+            </el-col>
+            <el-col :span="4">
+              <div style="display:flex;align-items:center;gap:4px">
                 <el-input v-model="filters.expected_salary_min" placeholder="薪资最低" clearable style="flex:1" />
                 <span style="color:#909399">~</span>
                 <el-input v-model="filters.expected_salary_max" placeholder="最高" clearable style="flex:1" />
               </div>
+            </el-col>
+          </el-row>
+          <!-- 区块4：平台链接 -->
+          <div style="margin-bottom:8px;font-size:13px;color:#606266;font-weight:500">平台链接</div>
+          <el-row :gutter="12" style="margin-bottom:10px">
+            <el-col :span="6">
+              <el-input v-model="filters.linkedin_url" placeholder="LinkedIn URL" clearable @clear="loadTalents" @keyup.enter="loadTalents" />
+            </el-col>
+            <el-col :span="6">
+              <el-input v-model="filters.github_url" placeholder="GitHub URL" clearable @clear="loadTalents" @keyup.enter="loadTalents" />
+            </el-col>
+            <el-col :span="6">
+              <el-input v-model="filters.maimai_url" placeholder="脉脉 URL" clearable @clear="loadTalents" @keyup.enter="loadTalents" />
+            </el-col>
+            <el-col :span="6">
+              <el-input v-model="filters.homepage" placeholder="个人主页 URL" clearable @clear="loadTalents" @keyup.enter="loadTalents" />
+            </el-col>
+          </el-row>
+          <!-- 区块5：学术成果 -->
+          <div style="margin-bottom:8px;font-size:13px;color:#606266;font-weight:500">学术成果</div>
+          <el-row :gutter="12" style="margin-bottom:10px">
+            <el-col :span="8">
+              <el-input v-model="filters.paper_title" placeholder="论文标题" clearable @clear="loadTalents" @keyup.enter="loadTalents" />
+            </el-col>
+            <el-col :span="8">
+              <el-input v-model="filters.patent_title" placeholder="专利标题" clearable @clear="loadTalents" @keyup.enter="loadTalents" />
+            </el-col>
+            <el-col :span="8">
+              <el-input v-model="filters.conference_name" placeholder="会议名称" clearable @clear="loadTalents" @keyup.enter="loadTalents" />
             </el-col>
           </el-row>
         </div>
@@ -166,6 +206,27 @@
         <el-table-column prop="rating" label="评分" width="110" v-if="visibleCols.includes('rating')">
           <template #default="{ row }">
             <el-rate v-model="row.rating" disabled size="small" />
+          </template>
+        </el-table-column>
+        <el-table-column prop="education" label="学历" width="70" v-if="visibleCols.includes('education')" />
+        <el-table-column prop="tags" label="标签" min-width="120" v-if="visibleCols.includes('tags')">
+          <template #default="{ row }">
+            <el-tag v-for="tag in (row.tags||'').split(',').filter(Boolean).slice(0,3)" :key="tag" type="info" size="small" style="margin:2px">{{ tag.trim() }}</el-tag>
+            <span v-if="(row.tags||'').split(',').filter(Boolean).length > 3" style="color:#909399;font-size:12px"> +{{ (row.tags||'').split(',').filter(Boolean).length - 3 }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="个人链接" width="120" v-if="visibleCols.includes('personal_links')">
+          <template #default="{ row }">
+            <a v-if="row.linkedin_url" :href="row.linkedin_url" target="_blank" style="color:#409eff;margin-right:4px;font-size:12px">In</a>
+            <a v-if="row.github_url" :href="row.github_url" target="_blank" style="color:#409eff;margin-right:4px;font-size:12px">GH</a>
+            <a v-if="row.maimai_url" :href="row.maimai_url" target="_blank" style="color:#409eff;margin-right:4px;font-size:12px">脉</a>
+            <a v-if="row.homepage" :href="row.homepage" target="_blank" style="color:#409eff;font-size:12px">主</a>
+            <span v-if="!row.linkedin_url && !row.github_url && !row.maimai_url && !row.homepage" style="color:#c0c4cc;font-size:12px">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="suitable_roles" label="适合岗位" min-width="120" v-if="visibleCols.includes('suitable_roles')">
+          <template #default="{ row }">
+            <el-tag v-for="role in (row.suitable_roles||'').split(',').filter(Boolean).slice(0,2)" :key="role" type="warning" size="small" style="margin:2px">{{ role.trim() }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="open_to_work" label="求职" width="60" align="center" v-if="visibleCols.includes('open_to_work')">
@@ -276,7 +337,9 @@ const defaultFilters = {
   education: '', gender: '', location: '', skills: '',
   experience_years_min: undefined, experience_years_max: undefined,
   expected_salary_min: '', expected_salary_max: '',
-  email: '', phone: '', wechat: '', suitable_roles: '', job_preference: ''
+  email: '', phone: '', wechat: '', suitable_roles: '', job_preference: '',
+  tags: '', linkedin_url: '', github_url: '', maimai_url: '', homepage: '',
+  paper_title: '', patent_title: '', conference_name: ''
 }
 const filters = reactive({ ...defaultFilters })
 
@@ -296,9 +359,13 @@ const allCols = [
   { key: 'profile_count', label: '档案' },
   { key: 'rating', label: '评分' },
   { key: 'open_to_work', label: '求职' },
+  { key: 'education', label: '学历' },
+  { key: 'tags', label: '标签' },
+  { key: 'personal_links', label: '个人链接' },
+  { key: 'suitable_roles', label: '适合岗位' },
   { key: 'created_at', label: '创建时间' },
 ]
-const visibleCols = ref(['company', 'title', 'location', 'skills', 'data_source', 'status', 'rating'])
+const visibleCols = ref(['company', 'title', 'location', 'skills', 'data_source', 'status', 'rating', 'education', 'tags'])
 
 async function loadTalents() {
   loading.value = true

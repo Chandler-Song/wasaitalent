@@ -123,7 +123,8 @@ async function initDatabase() {
   const newTalentColumns = [
     'open_to_work TEXT', 'suitable_roles TEXT', 'homepage TEXT',
     'github_url TEXT', 'google_scholar_url TEXT', 'gender TEXT',
-    'expected_salary TEXT', 'job_preference TEXT', 'wechat TEXT'
+    'expected_salary TEXT', 'job_preference TEXT', 'wechat TEXT',
+    'linkedin_url TEXT', 'maimai_url TEXT'
   ];
   for (const col of newTalentColumns) {
     try { database.run(`ALTER TABLE talents ADD COLUMN ${col}`); } catch (e) { /* column already exists */ }
@@ -215,6 +216,9 @@ async function initDatabase() {
       FOREIGN KEY (talent_id) REFERENCES talents(id) ON DELETE CASCADE
     );
   `);
+
+  // 为教育经历表添加description字段（迁移）
+  try { database.run('ALTER TABLE talent_educations ADD COLUMN description TEXT'); } catch (e) { /* column already exists */ }
 
   // 备注表
   database.run(`

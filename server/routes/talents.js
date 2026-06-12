@@ -9,7 +9,9 @@ router.get('/', authMiddleware, (req, res) => {
     const {
       search, data_source, import_method, status, open_to_work,
       education, gender, location, skills, email, phone, wechat,
-      suitable_roles, job_preference,
+      suitable_roles, job_preference, tags,
+      linkedin_url, github_url, maimai_url, homepage,
+      paper_title, patent_title, conference_name,
       experience_years_min, experience_years_max,
       expected_salary_min, expected_salary_max,
       page = 1, limit = 20, sort = 'created_at', order = 'DESC'
@@ -20,9 +22,9 @@ router.get('/', authMiddleware, (req, res) => {
     let params = [];
 
     if (search) {
-      whereClauses.push('(t.name LIKE ? OR t.email LIKE ? OR t.company LIKE ? OR t.title LIKE ? OR t.skills LIKE ? OR t.phone LIKE ? OR t.location LIKE ? OR t.education LIKE ? OR t.summary LIKE ? OR t.suitable_roles LIKE ? OR t.homepage LIKE ? OR t.github_url LIKE ? OR t.google_scholar_url LIKE ? OR t.wechat LIKE ? OR t.job_preference LIKE ? OR t.tags LIKE ?)');
+      whereClauses.push('(t.name LIKE ? OR t.email LIKE ? OR t.company LIKE ? OR t.title LIKE ? OR t.skills LIKE ? OR t.phone LIKE ? OR t.location LIKE ? OR t.education LIKE ? OR t.summary LIKE ? OR t.suitable_roles LIKE ? OR t.homepage LIKE ? OR t.github_url LIKE ? OR t.google_scholar_url LIKE ? OR t.wechat LIKE ? OR t.job_preference LIKE ? OR t.tags LIKE ? OR t.linkedin_url LIKE ? OR t.maimai_url LIKE ?)');
       const term = `%${search}%`;
-      params.push(term, term, term, term, term, term, term, term, term, term, term, term, term, term, term, term);
+      params.push(term, term, term, term, term, term, term, term, term, term, term, term, term, term, term, term, term, term);
     }
     if (data_source) {
       whereClauses.push('t.data_source = ?');
@@ -91,6 +93,38 @@ router.get('/', authMiddleware, (req, res) => {
     if (job_preference) {
       whereClauses.push('t.job_preference LIKE ?');
       params.push(`%${job_preference}%`);
+    }
+    if (tags) {
+      whereClauses.push('t.tags LIKE ?');
+      params.push(`%${tags}%`);
+    }
+    if (linkedin_url) {
+      whereClauses.push('t.linkedin_url LIKE ?');
+      params.push(`%${linkedin_url}%`);
+    }
+    if (github_url) {
+      whereClauses.push('t.github_url LIKE ?');
+      params.push(`%${github_url}%`);
+    }
+    if (maimai_url) {
+      whereClauses.push('t.maimai_url LIKE ?');
+      params.push(`%${maimai_url}%`);
+    }
+    if (homepage) {
+      whereClauses.push('t.homepage LIKE ?');
+      params.push(`%${homepage}%`);
+    }
+    if (paper_title) {
+      whereClauses.push('t.id IN (SELECT talent_id FROM talent_papers WHERE title LIKE ?)');
+      params.push(`%${paper_title}%`);
+    }
+    if (patent_title) {
+      whereClauses.push('t.id IN (SELECT talent_id FROM talent_patents WHERE title LIKE ?)');
+      params.push(`%${patent_title}%`);
+    }
+    if (conference_name) {
+      whereClauses.push('t.id IN (SELECT talent_id FROM talent_conferences WHERE conference_name LIKE ?)');
+      params.push(`%${conference_name}%`);
     }
 
     const whereStr = whereClauses.length > 0 ? 'WHERE ' + whereClauses.join(' AND ') : '';
@@ -167,7 +201,7 @@ router.post('/', authMiddleware, (req, res) => {
       name, email, phone, company, title, location, skills, education,
       experience_years, summary, data_source, import_method, tags, rating, status, avatar_url, raw_data,
       open_to_work, suitable_roles, homepage, github_url, google_scholar_url,
-      gender, expected_salary, job_preference, wechat
+      gender, expected_salary, job_preference, wechat, linkedin_url, maimai_url
     } = req.body;
 
     if (!name) {
@@ -178,15 +212,16 @@ router.post('/', authMiddleware, (req, res) => {
       INSERT INTO talents (name, email, phone, company, title, location, skills, education,
         experience_years, summary, data_source, import_method, tags, rating, status, avatar_url, raw_data,
         open_to_work, suitable_roles, homepage, github_url, google_scholar_url,
-        gender, expected_salary, job_preference, wechat, created_by)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        gender, expected_salary, job_preference, wechat, linkedin_url, maimai_url, created_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       name, email || null, phone || null, company || null, title || null,
       location || null, skills || null, education || null, experience_years || null,
       summary || null, data_source || 'manual', import_method || 'manual',
       tags || null, rating || 0, status || 'active', avatar_url || null, raw_data || null,
       open_to_work || null, suitable_roles || null, homepage || null, github_url || null, google_scholar_url || null,
-      gender || null, expected_salary || null, job_preference || null, wechat || null, req.user.id
+      gender || null, expected_salary || null, job_preference || null, wechat || null,
+      linkedin_url || null, maimai_url || null, req.user.id
     ]);
 
     const talent = get('SELECT * FROM talents WHERE id = ?', [result.lastInsertRowid]);
@@ -209,7 +244,7 @@ router.put('/:id', authMiddleware, (req, res) => {
       'education', 'experience_years', 'summary', 'data_source', 'import_method',
       'tags', 'rating', 'status', 'avatar_url', 'raw_data',
       'open_to_work', 'suitable_roles', 'homepage', 'github_url', 'google_scholar_url',
-      'gender', 'expected_salary', 'job_preference', 'wechat'];
+      'gender', 'expected_salary', 'job_preference', 'wechat', 'linkedin_url', 'maimai_url'];
 
     const updates = [];
     const values = [];
@@ -523,12 +558,12 @@ router.post('/:id/educations', authMiddleware, (req, res) => {
   try {
     const talent = get('SELECT id FROM talents WHERE id = ?', [req.params.id]);
     if (!talent) return res.status(404).json({ error: '人才信息不存在' });
-    const { school, degree, field, start_date, end_date, dates, location, ranking_info, data_source, sort_order } = req.body;
+    const { school, degree, field, start_date, end_date, dates, location, ranking_info, description, data_source, sort_order } = req.body;
     const result = run(`
-      INSERT INTO talent_educations (talent_id, school, degree, field, start_date, end_date, dates, location, ranking_info, data_source, sort_order)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO talent_educations (talent_id, school, degree, field, start_date, end_date, dates, location, ranking_info, description, data_source, sort_order)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [req.params.id, school || null, degree || null, field || null, start_date || null, end_date || null,
-      dates || null, location || null, ranking_info || null, data_source || 'manual', sort_order || 0]);
+      dates || null, location || null, ranking_info || null, description || null, data_source || 'manual', sort_order || 0]);
     const edu = get('SELECT * FROM talent_educations WHERE id = ?', [result.lastInsertRowid]);
     saveDb();
     res.status(201).json({ data: edu });
@@ -541,7 +576,7 @@ router.put('/:id/educations/:eid', authMiddleware, (req, res) => {
   try {
     const edu = get('SELECT id FROM talent_educations WHERE id = ? AND talent_id = ?', [req.params.eid, req.params.id]);
     if (!edu) return res.status(404).json({ error: '教育经历不存在' });
-    const fields = ['school', 'degree', 'field', 'start_date', 'end_date', 'dates', 'location', 'ranking_info', 'data_source', 'sort_order'];
+    const fields = ['school', 'degree', 'field', 'start_date', 'end_date', 'dates', 'location', 'ranking_info', 'description', 'data_source', 'sort_order'];
     const updates = [];
     const values = [];
     for (const field of fields) {
