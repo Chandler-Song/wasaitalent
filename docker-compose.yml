@@ -18,8 +18,8 @@ services:
     ports:
       - "3333:3333"
     volumes:
-      # SQLite 数据库持久化
-      - app-data:/app/server/data
+      # SQLite 数据库持久化 - 宿主机绑定挂载（实时同步，可直接备份）
+      - ./server/data:/app/server/data
     environment:
       - NODE_ENV=production
       - PORT=3333
@@ -40,12 +40,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 15s
-
-# ---------- 数据卷 ----------
-volumes:
-  app-data:
-    driver: local
-    name: wasaitalent-data
 
 # ---------- 网络 ----------
 networks:

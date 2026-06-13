@@ -272,7 +272,7 @@ docker compose logs -f
 | container_name | `wasaitalent-app` | 容器名称 |
 | restart | `unless-stopped` | 异常自动重启 |
 | ports | `3333:3333` | 宿主机端口映射 |
-| volumes | `app-data:/app/server/data` | SQLite 数据持久化 |
+| volumes | `./server/data:/app/server/data` | SQLite 宿主机绑定挂载（实时同步） |
 | memory limit | `512M` | 内存上限 |
 | cpu limit | `1.0` | CPU 上限 |
 | memory reservation | `256M` | 内存预留 |
@@ -298,28 +298,53 @@ healthcheck:
   start_period: 15s  # 启动宽限期
 ```
 
-### 4.4 数据库持久化
+### 4.4 数据库持久化（宿主机绑定挂载）
 
-SQLite 数据库文件存储在 Docker 卷 `wasaitalent-data` 中：
+SQLite 数据库文件通过**绑定挂载（bind mount）**直接存储在宿主机目录，与容器实时同步：
 
 | 项目 | 说明 |
 |------|------|
-| 卷名称 | `wasaitalent-data` |
+| 挂载方式 | 绑定挂载（bind mount） |
+| 宿主机路径 | `./server/data`（即 `/opt/wasaitalent/server/data`） |
 | 容器内路径 | `/app/server/data` |
-| 驱动 | `local` |
 | 数据文件 | `talents.db` |
+| 同步方式 | 实时同步，容器写入即宿主机写入 |
+
+> **优势**：数据库文件直接存储在宿主机文件系统中，无需通过 `docker cp` 即可直接备份、复制、迁移。
+
+**首次部署前准备**：
+```bash
+# 在服务器上创建数据目录并设置权限
+# 容器内以 nodejs 用户（UID 1001）运行，需确保该用户可写
+mkdir -p /opt/wasaitalent/server/data
+chown -R 1001:1001 /opt/wasaitalent/server/data
+```
 
 **备份数据库**：
 ```bash
-# 在服务器上备份
-docker exec wasaitalent-app cp /app/server/data/talents.db /tmp/talents-backup.db
-docker cp wasaitalent-app:/tmp/talents-backup.db ./talents-backup-$(date +%Y%m%d).db
+# 方式1：直接复制宿主机文件（推荐，最简单）
+cp /opt/wasaitalent/server/data/talents.db ./talents-backup-$(date +%Y%m%d).db
+
+# 方式2：停止服务后备份（确保数据完整性）
+docker compose stop
+cp /opt/wasaitalent/server/data/talents.db ./talents-backup-$(date +%Y%m%d).db
+docker compose start
 ```
 
 **恢复数据库**：
 ```bash
-docker cp ./talents-backup.db wasaitalent-app:/app/server/data/talents.db
+# 直接复制备份文件到宿主机数据目录
+cp ./talents-backup.db /opt/wasaitalent/server/data/talents.db
+
+# 重启服务使数据库生效
 docker compose restart
+```
+
+**定时自动备份（可选）**：
+```bash
+# 添加 crontab 定时任务，每天凌晨 2 点自动备份
+# crontab -e
+0 2 * * * cp /opt/wasaitalent/server/data/talents.db /opt/wasaitalent/backups/talents-$(date +\%Y\%m\%d).db
 ```
 
 ---
@@ -466,19 +491,22 @@ docker compose up -d
 
 **解决方法**：
 ```bash
-# 1. 检查数据库文件是否存在
-docker exec wasaitalent-app ls -la /app/server/data/
+# 1. 检查宿主机数据目录
+ls -la /opt/wasaitalent/server/data/
 
-# 2. 查看应用日志中的数据库错误
+# 2. 检查目录权限（容器以 UID 1001 运行）
+chown -R 1001:1001 /opt/wasaitalent/server/data
+
+# 3. 查看应用日志中的数据库错误
 docker compose logs | grep -i "database\|sqlite\|error"
 
-# 3. 如果数据库损坏，可重置（会丢失所有数据）
+# 4. 如果数据库损坏，可重置（会丢失所有数据）
 docker compose down
-docker volume rm wasaitalent-data
+rm /opt/wasaitalent/server/data/talents.db
 docker compose up -d
 
-# 4. 从备份恢复
-docker cp ./backup.db wasaitalent-app:/app/server/data/talents.db
+# 5. 从备份恢复
+cp ./backup.db /opt/wasaitalent/server/data/talents.db
 docker compose restart
 ```
 
@@ -546,9 +574,8 @@ docker rmi wasaitalent-app
 # 1. 停止当前服务
 docker compose down
 
-# 2. 备份当前数据
-docker exec wasaitalent-app cp /app/server/data/talents.db /tmp/talents-backup.db
-docker cp wasaitalent-app:/tmp/talents-backup.db ./talents-backup-$(date +%Y%m%d).db
+# 2. 备份当前数据（直接复制宿主机文件）
+cp /opt/wasaitalent/server/data/talents.db ./talents-backup-$(date +%Y%m%d).db
 
 # 3. 重新部署旧版本代码（使用旧版部署包）
 # 将旧版本代码解压到 /opt/wasaitalent/
@@ -563,8 +590,8 @@ curl http://localhost:3333/api/health
 ### 7.4 数据恢复
 
 ```bash
-# 从备份文件恢复数据库
-docker cp ./talents-backup-20260610.db wasaitalent-app:/app/server/data/talents.db
+# 从备份文件恢复数据库（直接复制到宿主机数据目录）
+cp ./talents-backup-20260610.db /opt/wasaitalent/server/data/talents.db
 
 # 重启服务使数据库生效
 docker compose restart
@@ -588,7 +615,7 @@ curl http://localhost:3333/api/health
 | 查看日志 | `docker compose logs -f` |
 | 查看状态 | `docker compose ps` |
 | 健康检查 | `curl http://<YOUR_SERVER_IP>:3333/api/health` |
-| 备份数据 | `docker exec wasaitalent-app cp /app/server/data/talents.db /tmp/backup.db` |
+| 备份数据 | `cp /opt/wasaitalent/server/data/talents.db ./backup-$(date +%Y%m%d).db` |
 | 查看资源 | `docker stats wasaitalent-app` |
 | 进入容器 | `docker exec -it wasaitalent-app sh` |
 
