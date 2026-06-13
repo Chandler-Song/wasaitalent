@@ -462,6 +462,8 @@
         <el-form-item label="类型" required>
           <el-select v-model="followupForm.type">
             <el-option label="电话沟通" value="call" />
+            <el-option label="微信沟通" value="wechat" />
+            <el-option label="视频沟通" value="video" />
             <el-option label="邮件联系" value="email" />
             <el-option label="面试" value="interview" />
             <el-option label="面谈" value="meeting" />
@@ -859,12 +861,12 @@ async function deleteEducation(edu) {
 }
 
 function followupTypeLabel(t) {
-  const map = { call: '电话沟通', email: '邮件联系', interview: '面试', meeting: '面谈', note: '备注', other: '其他' }
+  const map = { call: '电话沟通', wechat: '微信沟通', video: '视频沟通', email: '邮件联系', interview: '面试', meeting: '面谈', note: '备注', other: '其他' }
   return map[t] || t
 }
 
 function followupTagType(t) {
-  const map = { call: 'primary', email: 'info', interview: 'warning', meeting: 'success', note: 'info', other: 'info' }
+  const map = { call: 'primary', wechat: 'success', video: 'warning', email: 'info', interview: 'warning', meeting: 'success', note: 'info', other: 'info' }
   return map[t] || 'info'
 }
 

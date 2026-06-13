@@ -34,7 +34,7 @@
           </el-form>
         </el-tab-pane>
       </el-tabs>
-      <div class="hint">默认管理员: admin / admin123</div>
+
     </div>
   </div>
 </template>

@@ -2,12 +2,23 @@
   <div>
     <!-- 搜索栏 -->
     <el-card class="search-card" shadow="never">
-      <!-- 基础搜索行 -->
+      <!-- 搜索行：输入框 + 按钮 -->
       <el-row :gutter="12" align="middle">
-        <el-col :span="6">
+        <el-col :span="10">
           <el-input v-model="filters.search" placeholder="搜索姓名/公司/技能/邮箱/电话..." clearable @clear="loadTalents" @keyup.enter="loadTalents" prefix-icon="Search" />
         </el-col>
-        <el-col :span="3">
+        <el-col :span="14">
+          <el-button type="primary" @click="loadTalents" icon="Search">搜索</el-button>
+          <el-button @click="resetFilters">重置</el-button>
+          <el-button link type="primary" @click="showAdvanced = !showAdvanced">
+            {{ showAdvanced ? '收起' : '高级搜索' }}
+            <el-icon style="margin-left:4px"><ArrowUp v-if="showAdvanced" /><ArrowDown v-else /></el-icon>
+          </el-button>
+        </el-col>
+      </el-row>
+      <!-- 筛选行 -->
+      <el-row :gutter="12" align="middle" style="margin-top:10px">
+        <el-col :span="5">
           <el-select v-model="filters.data_source" placeholder="数据来源" clearable @change="loadTalents">
             <el-option label="LinkedIn" value="linkedin" />
             <el-option label="脉脉" value="maimai" />
@@ -21,7 +32,7 @@
             <el-option label="CSV" value="csv" />
           </el-select>
         </el-col>
-        <el-col :span="3">
+        <el-col :span="5">
           <el-select v-model="filters.status" placeholder="状态" clearable @change="loadTalents">
             <el-option label="活跃" value="active" />
             <el-option label="已联系" value="contacted" />
@@ -29,19 +40,11 @@
             <el-option label="待处理" value="pending" />
           </el-select>
         </el-col>
-        <el-col :span="3">
+        <el-col :span="5">
           <el-select v-model="filters.open_to_work" placeholder="求职状态" clearable @change="loadTalents">
             <el-option label="在看机会" value="yes" />
             <el-option label="不在看" value="no" />
           </el-select>
-        </el-col>
-        <el-col :span="4">
-          <el-button type="primary" @click="loadTalents" icon="Search">搜索</el-button>
-          <el-button @click="resetFilters">重置</el-button>
-          <el-button link type="primary" @click="showAdvanced = !showAdvanced">
-            {{ showAdvanced ? '收起' : '高级搜索' }}
-            <el-icon style="margin-left:4px"><ArrowUp v-if="showAdvanced" /><ArrowDown v-else /></el-icon>
-          </el-button>
         </el-col>
       </el-row>
 
@@ -217,10 +220,10 @@
         </el-table-column>
         <el-table-column label="个人链接" width="120" v-if="visibleCols.includes('personal_links')">
           <template #default="{ row }">
-            <a v-if="row.linkedin_url" :href="row.linkedin_url" target="_blank" style="color:#409eff;margin-right:4px;font-size:12px">In</a>
-            <a v-if="row.github_url" :href="row.github_url" target="_blank" style="color:#409eff;margin-right:4px;font-size:12px">GH</a>
-            <a v-if="row.maimai_url" :href="row.maimai_url" target="_blank" style="color:#409eff;margin-right:4px;font-size:12px">脉</a>
-            <a v-if="row.homepage" :href="row.homepage" target="_blank" style="color:#409eff;font-size:12px">主</a>
+            <a v-if="row.linkedin_url" :href="row.linkedin_url" target="_blank" style="color:#409eff;margin-right:4px;font-size:12px">Linkedin</a>
+            <a v-if="row.github_url" :href="row.github_url" target="_blank" style="color:#409eff;margin-right:4px;font-size:12px">Github</a>
+            <a v-if="row.maimai_url" :href="row.maimai_url" target="_blank" style="color:#409eff;margin-right:4px;font-size:12px">Maimai</a>
+            <a v-if="row.homepage" :href="row.homepage" target="_blank" style="color:#409eff;font-size:12px">Homepage</a>
             <span v-if="!row.linkedin_url && !row.github_url && !row.maimai_url && !row.homepage" style="color:#c0c4cc;font-size:12px">-</span>
           </template>
         </el-table-column>
@@ -262,7 +265,10 @@
       </div>
     </el-card>
     <!-- 人才详情模态框 -->
-    <el-dialog v-model="showDetailDialog" :title="'人才详情 #' + selectedTalentId" width="92%" top="3vh" destroy-on-close class="detail-dialog">
+    <el-dialog v-model="showDetailDialog" width="92%" top="3vh" destroy-on-close class="detail-dialog">
+      <template #header>
+        <span>人才详情 <a :href="`/talents/${selectedTalentId}`" target="_blank" style="color:#409eff;text-decoration:none;font-weight:600">#{{ selectedTalentId }}</a></span>
+      </template>
       <TalentDetail
         v-if="showDetailDialog"
         :talent-id="selectedTalentId"
