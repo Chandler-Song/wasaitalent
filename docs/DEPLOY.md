@@ -219,7 +219,72 @@ chmod +x scripts/deploy.sh
 [INFO] ==========================================
 ```
 
-### 3.3 服务器端自动化部署（推荐）
+### 3.3 指定版本部署（推荐）
+
+项目使用 Git 标签（Tag）管理发布版本，部署时建议检出特定版本标签，确保部署内容明确、可追溯。
+
+**查看所有可用版本标签**：
+```bash
+cd /opt/wasaitalent
+git fetch --tags
+git tag -l
+# 输出示例：v0.1.0
+```
+
+**检出指定版本（如 v0.1.0）**：
+```bash
+cd /opt/wasaitalent
+
+# 检出标签到 detached HEAD
+git checkout v0.1.0
+
+# 或基于标签创建本地分支（推荐，便于后续 git pull）
+git checkout -b release/v0.1.0 v0.1.0
+```
+
+**部署 v0.1.0 完整步骤**：
+```bash
+# 1. 克隆仓库（首次部署）
+git clone https://github.com/Chandler-Song/wasaitalent.git /opt/wasaitalent
+cd /opt/wasaitalent
+
+# 2. 检出 v0.1.0 版本
+git checkout v0.1.0
+
+# 3. 创建数据目录并设置权限
+mkdir -p server/data
+chown -R 1001:1001 server/data
+
+# 4. 构建并启动
+docker compose build
+docker compose up -d
+
+# 5. 验证服务
+curl http://localhost:3333/api/health
+```
+
+**更新到新版本**：
+```bash
+cd /opt/wasaitalent
+
+# 获取最新标签
+git fetch --tags
+
+# 查看新版本
+git tag -l
+
+# 切换到新版本
+git checkout v0.2.0  # 替换为目标版本
+
+# 重建并重启
+docker compose down
+docker compose build
+docker compose up -d
+```
+
+> **注意**：切换版本时 `server/data` 目录中的 SQLite 数据库文件会被保留，数据不会丢失。但建议在切换版本前备份数据库。
+
+### 3.4 服务器端自动化部署
 
 项目提供 `scripts/setup-deploy.sh` 服务器端自动化部署脚本，在服务器上直接执行即可完成从代码获取到服务启动的全流程。
 
@@ -285,7 +350,7 @@ chmod +x /tmp/setup-deploy.sh
 3. 脚本自动处理 SQLite 数据库绑定挂载和权限配置
 4. 已有数据不会丢失（git pull 保留 server/data 目录）
 
-### 3.4 手动 Docker 部署
+### 3.5 手动 Docker 部署
 
 如果不使用自动化脚本，也可手动完成部署：
 
