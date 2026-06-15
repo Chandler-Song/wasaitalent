@@ -32,7 +32,7 @@
                 <span style="font-size:18px;font-weight:600">{{ talent.name }}</span>
               </div>
               <div>
-                <el-button type="primary" size="small" @click="$emit('edit', talent.id)">编辑</el-button>
+                <el-button type="primary" size="small" @click="handleEdit">编辑</el-button>
               </div>
             </div>
           </template>
@@ -595,6 +595,14 @@ const conferences = ref([])
 const githubRepos = ref([])
 const relatedTalents = ref([])
 const loading = ref(true)
+
+function handleEdit() {
+  if (props.embedded) {
+    emit('edit', talent.value.id)
+  } else {
+    router.push(`/talents/${tid.value}/edit`)
+  }
+}
 
 function goBack() {
   // 如果是由新标签页打开且无历史记录，则跳转到列表页

@@ -219,7 +219,75 @@ chmod +x scripts/deploy.sh
 [INFO] ==========================================
 ```
 
-### 3.3 手动 Docker 部署
+### 3.3 服务器端自动化部署（推荐）
+
+项目提供 `scripts/setup-deploy.sh` 服务器端自动化部署脚本，在服务器上直接执行即可完成从代码获取到服务启动的全流程。
+
+**脚本功能**：
+1. 从 GitHub 仓库拉取最新代码（首次克隆 / 已有则 git pull 更新）
+2. 自动检查并安装必要依赖（Git、Docker、Docker Compose）
+3. 验证端口 3333 可用性（如被占用可自动停止占用进程）
+4. 创建数据目录并设置正确权限（UID 1001）
+5. 自动构建 Docker 镜像并启动服务
+6. 健康检查轮询，确认服务正常运行
+7. 输出部署结果、访问地址和常用命令
+
+**执行方式一：脚本已在服务器上**（通过 `deploy.sh` 传输或手动上传）：
+```bash
+cd /opt/wasaitalent
+bash scripts/setup-deploy.sh
+```
+
+**执行方式二：从 GitHub 下载并执行**：
+```bash
+curl -fsSL https://raw.githubusercontent.com/Chandler-Song/wasaitalent/main/scripts/setup-deploy.sh -o /tmp/setup-deploy.sh
+chmod +x /tmp/setup-deploy.sh
+/tmp/setup-deploy.sh
+```
+
+**预期输出**：
+```
+[STEP] 步骤1/6：检查 Git...
+[INFO] git version 2.34.1 ✓
+[STEP] 步骤2/6：检查 Docker...
+[INFO] Docker version 24.0.7 ✓
+[STEP] 步骤3/6：检查 Docker Compose...
+[INFO] Docker Compose 2.24.0 ✓
+[STEP] 步骤4/6：检查端口 3333...
+[INFO] 端口 3333 可用 ✓
+[STEP] 步骤5/6：获取项目代码...
+[INFO] 正在克隆仓库...
+[INFO] 代码克隆完成 ✓
+[STEP] 步骤6/6：Docker 构建与启动...
+[INFO] 数据目录准备完成
+[INFO] 正在构建 Docker 镜像（首次约 3-5 分钟）...
+...
+[INFO] 正在启动服务...
+[INFO] 等待服务启动...
+
+[INFO] ==========================================
+[INFO]   部署成功！
+[INFO] ==========================================
+[INFO] 访问地址: http://<SERVER_IP>:3333
+[INFO] 健康检查: http://localhost:3333/api/health
+[INFO] 数据目录: /opt/wasaitalent/server/data
+[INFO] 默认管理员: admin / admin123
+```
+
+**适用场景**：
+- 服务器环境全新部署（一键完成）
+- 代码更新后的重新部署（自动 git pull + 重建）
+- 服务故障后的快速恢复
+
+**注意事项**：
+1. 服务器需具备访问 GitHub 的网络连接
+2. 脚本会自动安装 Git、Docker、Docker Compose（需 root 权限）
+3. 脚本自动处理 SQLite 数据库绑定挂载和权限配置
+4. 已有数据不会丢失（git pull 保留 server/data 目录）
+
+### 3.4 手动 Docker 部署
+
+如果不使用自动化脚本，也可手动完成部署：
 
 脚本执行完成后，SSH 登录服务器完成 Docker 构建和启动：
 
@@ -233,13 +301,17 @@ cd /opt/wasaitalent
 # 3. 验证文件完整性
 ls -la Dockerfile docker-compose.yml
 
-# 4. 构建 Docker 镜像（首次约 3-5 分钟）
+# 4. 创建数据目录并设置权限
+mkdir -p server/data
+chown -R 1001:1001 server/data
+
+# 5. 构建 Docker 镜像（首次约 3-5 分钟）
 docker compose build
 
-# 5. 启动服务（后台运行）
+# 6. 启动服务（后台运行）
 docker compose up -d
 
-# 6. 查看启动日志
+# 7. 查看启动日志
 docker compose logs -f
 ```
 
