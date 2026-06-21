@@ -1172,6 +1172,191 @@ JSON 批量导入。
 
 ---
 
+## 数据导入工具（importers）
+
+`wsapi.importers` 子模块提供 LinkedIn 简历和脉脉平台数据的标准化导入功能，内置 Schema 校验、字段映射和逐条子资源导入。
+
+### 安装额外依赖
+
+```bash
+pip install jsonschema>=4.0.0
+```
+
+> `jsonschema` 已包含在 `pyproject.toml` 的 dependencies 中，使用 `pip install -e ".[dev]"` 会自动安装。
+
+### LinkedIn 简历导入
+
+接受符合 JSON Schema 的结构化简历数据（通常由大模型从原始简历中提取），自动创建人才记录并填充工作经历和教育经历。
+
+```python
+from wsapi import WasaiTalentClient
+from wsapi.importers import import_linkedin
+
+client = WasaiTalentClient(base_url="http://localhost:3001")
+client.auth.login("user", "user123")
+
+# 符合 Schema 的简历数据
+linkedin_data = {
+    "name": "张三",
+    "title": "Senior Engineer",
+    "company": "Microsoft",
+    "location": "Beijing",
+    "email": "zhang@example.com",
+    "linkedin": "https://linkedin.com/in/zhangsan",
+    "github": "https://github.com/zhangsan",
+    "highest_degree": "硕士",
+    "experience_years": 5,
+    "skills": ["Python", "Go", "Kubernetes"],
+    "suitable_job_roles": ["Backend Engineer", "SRE"],
+    "experience": [
+        {
+            "company": "Microsoft",
+            "title": "Senior Engineer",
+            "start_date": "2020-03",
+            "end_date": "2025-06",
+            "duration": 5,
+            "is_current": 0,
+            "description": "Cloud infrastructure..."
+        }
+    ],
+    "education": [
+        {
+            "school": "清华大学",
+            "degree": "硕士",
+            "field": "计算机科学",
+            "start_year": 2017,
+            "end_year": 2020
+        }
+    ]
+}
+
+# 导入（自动校验 Schema → 创建人才 → 添加经历 → 添加教育）
+talent_id = import_linkedin(client, linkedin_data)
+print(f"Created talent: {talent_id}")
+
+# 跳过 Schema 校验（不推荐）
+talent_id = import_linkedin(client, linkedin_data, validate=False)
+
+# 自定义数据来源标记
+talent_id = import_linkedin(client, linkedin_data, data_source="linkedin", import_method="ai_extract")
+```
+
+**`import_linkedin` 参数说明：**
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `client` | `WasaiTalentClient` | 必填 | SDK 客户端实例（已登录） |
+| `data` | `dict` | 必填 | 符合 Schema 的简历数据 |
+| `validate` | `bool` | `True` | 是否执行 Schema 校验 |
+| `data_source` | `str` | `"manual"` | 数据来源标记 |
+| `import_method` | `str` | `"manual"` | 导入方式标记 |
+
+### 脉脉数据导入
+
+解析脉脉平台原始 JSON 数据，自动提取技能、标签、职位偏好等信息并导入。
+
+```python
+from wsapi import WasaiTalentClient
+from wsapi.importers import import_maimai
+
+client = WasaiTalentClient(base_url="http://localhost:3001")
+client.auth.login("admin", "admin123")
+
+# 脉脉原始数据（通常从 API 或爬虫获取）
+maimai_data = {
+    "code": 0,
+    "msg": "success",
+    "data": {
+        "name": "李四",
+        "email": "lisi@test.com",
+        "phone": "13900000000",
+        "company": "字节跳动",
+        "position": "后端架构师",
+        "province": "北京",
+        "skills_tag": ["Java", "SpringBoot", "Docker"],
+        "tags": ["架构", "高并发"],
+        "work_time": "8年",
+        "sdegree": "硕士",
+        "summary": "8年架构经验...",
+        "job_preferences": {
+            "positions": ["技术总监", "架构师"],
+            "salary": "80w-120w",
+            "looking_for_job": 0
+        },
+        "exp": [
+            {
+                "company": "字节跳动",
+                "position": "架构师",
+                "start_date": "2019-07",
+                "is_leave": 0,
+                "worktime": "至今",
+                "description": "负责广告系统架构..."
+            }
+        ],
+        "edu": [
+            {
+                "school": "上海交通大学",
+                "sdegree": "硕士",
+                "department": "计算机科学",
+                "start_date": "2013-09",
+                "end_date": "2016-06",
+                "judge": 1
+            }
+        ]
+    }
+}
+
+# 导入
+talent_id = import_maimai(client, maimai_data)
+print(f"Created talent: {talent_id}")
+```
+
+**`import_maimai` 参数说明：**
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `client` | `WasaiTalentClient` | 必填 | SDK 客户端实例（已登录） |
+| `maimai_data` | `dict` | 必填 | 脉脉原始数据（含 `data` 键） |
+| `data_source` | `str` | `"maimai"` | 数据来源标记 |
+| `import_method` | `str` | `"auto_parse"` | 导入方式标记 |
+
+### Schema 校验
+
+LinkedIn 导入内置 JSON Schema（Draft-07）校验，也可单独使用：
+
+```python
+from wsapi.importers import validate_linkedin_data, SchemaValidationError, LINKEDIN_RESUME_SCHEMA
+
+# 单独校验数据
+try:
+    validate_linkedin_data(my_data)
+    print("数据合法 ✓")
+except SchemaValidationError as e:
+    print(f"校验失败: {e.errors}")
+
+# 访问 Schema 定义
+print(LINKEDIN_RESUME_SCHEMA["required"])
+```
+
+### 辅助工具函数
+
+```python
+from wsapi.importers import (
+    safe_get,          # 安全获取嵌套字典值
+    parse_int,         # 字符串转整数（"8年" → 8）
+    parse_list_to_csv, # 列表转 CSV（["a","b"] → "a,b"）
+    parse_date,        # 标准化日期为 YYYY-MM
+    to_json_str,       # 对象转 JSON 字符串
+    filter_none,       # 过滤字典中的 None 值
+)
+
+# 使用示例
+val = safe_get({"a": {"b": 1}}, "a", "b")  # → 1
+years = parse_int("8年")                    # → 8
+csv = parse_list_to_csv(["Python", "Go"])   # → "Python,Go"
+date = parse_date("2024-03")                # → "2024-03"
+```
+
 ## 异常处理
 
 ```python
@@ -1213,12 +1398,19 @@ pytest tests/test_admin.py -v
 
 ```
 wsapi/
-├── __init__.py          # 包入口，导出所有公共类
+├── __init__.py          # 包入口，导出所有公共类 + 导入函数
 ├── client.py            # 核心实现：_BaseClient + AuthAPI/TalentAPI/AdminAPI/OpenAPI + WasaiTalentClient
 ├── exceptions.py        # 自定义异常类
+├── importers/           # 数据导入工具集
+│   ├── __init__.py      # 导出 import_linkedin / import_maimai + 工具函数
+│   ├── linkedin.py      # LinkedIn 简历导入实现
+│   ├── maimai.py        # 脉脉数据导入实现
+│   ├── schema.py        # JSON Schema 定义与校验
+│   └── utils.py         # 辅助函数（safe_get / parse_int / parse_date 等）
 ├── pyproject.toml      # 包构建配置 & pytest 配置
 ├── requirements.txt     # 依赖声明（兼容旧方式）
 ├── README.md            # 本文档
+├── demo/                # 原始示例脚本（供参考）
 └── tests/
     ├── conftest.py      # pytest 公共 fixtures（mock_api / client）
     ├── test_auth.py     # AuthAPI 测试

@@ -16,6 +16,11 @@ from .exceptions import (
     ValidationError,
     ServerError,
 )
+from .importers import (
+    import_linkedin,
+    import_maimai,
+    SchemaValidationError,
+)
 
 __all__ = [
     "WasaiTalentClient",
@@ -30,6 +35,9 @@ __all__ = [
     "ConflictError",
     "ValidationError",
     "ServerError",
+    "import_linkedin",
+    "import_maimai",
+    "SchemaValidationError",
 ]
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"

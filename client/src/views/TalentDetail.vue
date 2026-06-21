@@ -72,10 +72,28 @@
             </el-descriptions-item>
             <el-descriptions-item label="简介" :span="2">{{ talent.summary || '-' }}</el-descriptions-item>
             <el-descriptions-item label="个人链接" :span="2" v-if="talent.linkedin_url || talent.maimai_url || talent.github_url || talent.homepage">
-              <a v-if="talent.linkedin_url" :href="talent.linkedin_url" target="_blank" style="margin-right:12px;color:#409eff">LinkedIn</a>
-              <a v-if="talent.maimai_url" :href="talent.maimai_url" target="_blank" style="margin-right:12px;color:#409eff">脉脉</a>
-              <a v-if="talent.github_url" :href="talent.github_url" target="_blank" style="margin-right:12px;color:#409eff">GitHub</a>
-              <a v-if="talent.homepage" :href="talent.homepage" target="_blank" style="color:#409eff">主页</a>
+              <div class="profile-icons">
+                <el-tooltip v-if="talent.linkedin_url" content="LinkedIn" placement="top">
+                  <a :href="talent.linkedin_url" target="_blank" class="icon-link linkedin-icon">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="#0A66C2"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                  </a>
+                </el-tooltip>
+                <el-tooltip v-if="talent.github_url" content="GitHub" placement="top">
+                  <a :href="talent.github_url" target="_blank" class="icon-link github-icon">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="#24292f"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+                  </a>
+                </el-tooltip>
+                <el-tooltip v-if="talent.maimai_url" content="脉脉" placement="top">
+                  <a :href="talent.maimai_url" target="_blank" class="icon-link maimai-icon">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="#2088FF"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm4 0h-2v-6h2v6zm-2-8a1 1 0 110-2 1 1 0 010 2zm-4 0a1 1 0 110-2 1 1 0 010 2z"/></svg>
+                  </a>
+                </el-tooltip>
+                <el-tooltip v-if="talent.homepage" content="主页" placement="top">
+                  <a :href="talent.homepage" target="_blank" class="icon-link homepage-icon">
+                    <el-icon :size="18"><HomeFilled /></el-icon>
+                  </a>
+                </el-tooltip>
+              </div>
             </el-descriptions-item>
           </el-descriptions>
         </el-card>
@@ -103,10 +121,22 @@
                   <span v-if="calcDuration(exp.start_date, exp.end_date)" class="exp-duration">（{{ calcDuration(exp.start_date, exp.end_date) }}）</span>
                 </div>
                 <div v-if="exp.location" class="exp-meta">{{ exp.location }}</div>
-                <div v-if="exp.description" class="exp-desc">{{ exp.description }}</div>
                 <div v-if="exp.company_details" class="exp-meta">
                   <el-tag v-for="(v, k) in parseCompanyDetails(exp.company_details)" :key="k" size="small" type="info" style="margin:2px">{{ v }}</el-tag>
                 </div>
+                <div v-if="exp.responsibilities" class="exp-detail-block">
+                  <div class="exp-detail-label">职责</div>
+                  <ul class="exp-detail-list">
+                    <li v-for="(item, idx) in formatTextOrArray(exp.responsibilities)" :key="idx">{{ item }}</li>
+                  </ul>
+                </div>
+                <div v-if="exp.achievements" class="exp-detail-block">
+                  <div class="exp-detail-label">成就</div>
+                  <ul class="exp-detail-list">
+                    <li v-for="(item, idx) in formatTextOrArray(exp.achievements)" :key="idx">{{ item }}</li>
+                  </ul>
+                </div>
+                <div v-if="exp.description" class="exp-desc">{{ exp.description }}</div>
               </div>
             </el-timeline-item>
           </el-timeline>
@@ -129,7 +159,7 @@
                   <el-button type="primary" size="small" link @click="editEducation(edu)" style="margin-left:auto">编辑</el-button>
                   <el-button type="danger" size="small" link @click="deleteEducation(edu)">删除</el-button>
                 </div>
-                <div class="edu-dates">{{ [edu.start_date, edu.end_date].filter(Boolean).join(' - ') }}</div>
+                <div class="edu-dates">{{ (edu.start_date || edu.end_date) ? [edu.start_date, edu.end_date || '至今'].filter(Boolean).join(' - ') : (edu.dates || '') }}</div>
                 <div class="edu-meta">{{ [edu.degree, edu.field].filter(Boolean).join(' · ') }}</div>
                 <div v-if="edu.location" class="edu-meta">{{ edu.location }}</div>
                 <div v-if="edu.description" class="edu-desc">{{ edu.description }}</div>
@@ -432,6 +462,8 @@
         <el-form-item label="结束时间"><el-input v-model="expForm.end_date" placeholder="YYYY-MM 或留空表示在职" /></el-form-item>
         <el-form-item label="时长"><el-input v-model="expForm.duration" placeholder="如 2年3个月" /></el-form-item>
         <el-form-item label="工作地点"><el-input v-model="expForm.location" /></el-form-item>
+        <el-form-item label="职责"><el-input v-model="expForm.responsibilities" type="textarea" :rows="3" placeholder="工作内容与职责，每行一条" /></el-form-item>
+        <el-form-item label="成就"><el-input v-model="expForm.achievements" type="textarea" :rows="2" placeholder="工作成就，每行一条" /></el-form-item>
         <el-form-item label="工作描述"><el-input v-model="expForm.description" type="textarea" :rows="2" /></el-form-item>
       </el-form>
       <template #footer>
@@ -446,7 +478,9 @@
         <el-form-item label="学校"><el-input v-model="eduForm.school" /></el-form-item>
         <el-form-item label="学位"><el-input v-model="eduForm.degree" placeholder="硕士/本科/博士" /></el-form-item>
         <el-form-item label="专业"><el-input v-model="eduForm.field" /></el-form-item>
-        <el-form-item label="时间"><el-input v-model="eduForm.dates" placeholder="如 2018 - 2023" /></el-form-item>
+        <el-form-item label="开始时间"><el-input v-model="eduForm.start_date" placeholder="YYYY-MM" /></el-form-item>
+        <el-form-item label="结束时间"><el-input v-model="eduForm.end_date" placeholder="YYYY-MM 或留空" /></el-form-item>
+        <el-form-item label="时间段"><el-input v-model="eduForm.dates" placeholder="如 2018 - 2023（备选，优先显示起止时间）" /></el-form-item>
         <el-form-item label="学校地点"><el-input v-model="eduForm.location" /></el-form-item>
         <el-form-item label="详情描述"><el-input v-model="eduForm.description" type="textarea" :rows="2" placeholder="主修课程、研究方向等" /></el-form-item>
       </el-form>
@@ -571,7 +605,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { talentsApi } from '../api'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Clock, ArrowLeft, Loading } from '@element-plus/icons-vue'
+import { Clock, ArrowLeft, Loading, HomeFilled } from '@element-plus/icons-vue'
 
 const props = defineProps({
   talentId: { type: [Number, String], default: null },
@@ -635,8 +669,8 @@ const mergeSearchQuery = ref('')
 const mergeSearchResults = ref([])
 const viewingProfile = ref({})
 const profileForm = ref({ platform: 'github', platform_url: '', username: '', display_name: '', bio: '', title: '', company: '', location: '', email: '' })
-const expForm = ref({ company: '', title: '', start_date: '', end_date: '', duration: '', location: '', description: '' })
-const eduForm = ref({ school: '', degree: '', field: '', dates: '', location: '', description: '' })
+const expForm = ref({ company: '', title: '', start_date: '', end_date: '', duration: '', location: '', responsibilities: '', achievements: '', description: '' })
+const eduForm = ref({ school: '', degree: '', field: '', start_date: '', end_date: '', dates: '', location: '', description: '' })
 const followupForm = ref({ type: 'note', content: '', next_action: '', next_date: '' })
 const paperForm = ref({ title: '', authors: '', abstract: '', venue: '', year: null, doi: '', arxiv_id: '', pdf_url: '', categories: '', citation_count: 0 })
 const patentForm = ref({ title: '', patent_number: '', patent_type: '', status: '', filing_date: '', grant_date: '', inventors: '', assignee: '', abstract: '' })
@@ -799,6 +833,23 @@ function parseCompanyDetails(str) {
   try { return JSON.parse(str) } catch { return {} }
 }
 
+function formatTextOrArray(val) {
+  if (!val) return []
+  if (Array.isArray(val)) return val.filter(Boolean)
+  if (typeof val === 'string') {
+    try {
+      const parsed = JSON.parse(val)
+      if (Array.isArray(parsed)) return parsed.filter(Boolean)
+    } catch {
+      // not JSON
+    }
+    // Plain text: split by newlines, or return as single item
+    const lines = val.split('\n').map(s => s.trim()).filter(Boolean)
+    return lines.length > 1 ? lines : [val]
+  }
+  return [String(val)]
+}
+
 function parseRankingTags(str) {
   try {
     const info = JSON.parse(str)
@@ -822,7 +873,7 @@ async function saveExperience() {
       ElMessage.success('工作经历已添加')
     }
     showExpDialog.value = false
-    expForm.value = { company: '', title: '', start_date: '', end_date: '', duration: '', location: '', description: '' }
+    expForm.value = { company: '', title: '', start_date: '', end_date: '', duration: '', location: '', responsibilities: '', achievements: '', description: '' }
     loadDetail()
   } catch (err) {
     ElMessage.error(expForm.value.id ? '更新工作经历失败' : '添加工作经历失败')
@@ -853,7 +904,7 @@ async function saveEducation() {
       ElMessage.success('教育经历已添加')
     }
     showEduDialog.value = false
-    eduForm.value = { school: '', degree: '', field: '', dates: '', location: '', description: '' }
+    eduForm.value = { school: '', degree: '', field: '', start_date: '', end_date: '', dates: '', location: '', description: '' }
     loadDetail()
   } catch (err) {
     ElMessage.error(eduForm.value.id ? '更新教育经历失败' : '添加教育经历失败')
@@ -1066,6 +1117,9 @@ watch(() => props.talentId, (newVal) => { if (newVal) loadDetail() })
 .exp-duration { color: #909399; font-size: 12px; }
 .exp-desc { font-size: 13px; color: #606266; margin-top: 4px; }
 .exp-detail { font-size: 12px; color: #606266; margin-top: 2px; }
+.exp-detail-block { margin-top: 6px; }
+.exp-detail-label { font-size: 12px; font-weight: 600; color: #303133; margin-bottom: 2px; }
+.exp-detail-list { margin: 0; padding-left: 18px; font-size: 13px; color: #606266; line-height: 1.6; }
 .edu-item { }
 .edu-header { display: flex; align-items: center; gap: 8px; }
 .edu-school { font-weight: 600; font-size: 15px; }
@@ -1102,4 +1156,24 @@ watch(() => props.talentId, (newVal) => { if (newVal) loadDetail() })
 .repo-name:hover { text-decoration: underline; }
 .repo-desc { font-size: 12px; color: #606266; margin-top: 4px; }
 .repo-stats { font-size: 12px; color: #909399; margin-top: 4px; display: flex; gap: 12px; }
+.profile-icons { display: flex; align-items: center; gap: 10px; }
+.icon-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+.icon-link:hover {
+  transform: scale(1.15);
+  background: #f0f2f5;
+}
+.linkedin-icon:hover { background: rgba(10,102,194,0.1); }
+.github-icon:hover { background: rgba(36,41,47,0.1); }
+.maimai-icon:hover { background: rgba(32,136,255,0.1); }
+.homepage-icon { color: #606266; }
+.homepage-icon:hover { color: #409eff; background: rgba(64,158,255,0.1); }
 </style>
